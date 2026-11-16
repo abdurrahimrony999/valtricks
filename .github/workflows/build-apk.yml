@@ -1,5 +1,5 @@
 
-name: Build Android APK
+name: Build ValtrixCap Android Release
 
 on:
   push:
@@ -12,35 +12,76 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout source code
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
+      # Install dependencies
       - name: Install dependencies
         run: npm ci
 
+      # Setup Java
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 17
 
+      # Setup Android release keystore
+      - name: Decode Android Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/release.keystore
+
+      # Restore Firebase configuration, if configured
+      - name: Configure Firebase
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          fi
+
+      # Generate launcher icons and splash resources
+      - name: Generate Android Assets
+        run: npx @capacitor/assets generate --android
+
+      # Synchronize Capacitor
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Build APK
+      # Build signed release APK and AAB
+      - name: Build Release APK and AAB
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_FILE: release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease bundleRelease
 
-      - name: Upload APK
+      # Upload release APK
+      - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: My-Website-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: ValtrixCap-Release-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+
+      # Upload release AAB
+      - name: Upload Release AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: ValtrixCap-Release-AAB
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error

@@ -1,7 +1,7 @@
 
 {
   "appId": "com.valtrixcap.app",
-  "appName": "App",
+  "appName": "ValtrixCap",
   "webDir": "www",
   "server": {
     "url": "https://valtrixcap.com",
@@ -10,5 +10,14 @@
       "valtrixcap.com",
       "*.valtrixcap.com"
     ]
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2500,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 500,
+      "backgroundColor": "#06143D",
+      "showSpinner": false
+    }
   }
 }

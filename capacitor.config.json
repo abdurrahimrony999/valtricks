@@ -1,0 +1,14 @@
+
+{
+  "appId": "com.valtrixcap.app",
+  "appName": "App",
+  "webDir": "www",
+  "server": {
+    "url": "https://valtrixcap.com",
+    "cleartext": false,
+    "allowNavigation": [
+      "valtrixcap.com",
+      "*.valtrixcap.com"
+    ]
+  }
+}
